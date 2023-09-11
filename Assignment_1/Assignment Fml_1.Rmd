@@ -1,0 +1,87 @@
+---
+title: "Assignment-1"
+author: "Chandu"
+date: "2023-09-10"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#Importing the dataset 
+
+```{r}
+library(readr)
+train <- read_csv("train.csv")
+View(train)
+```
+
+# Print out descriptive statistics for a selection of quantitative and categorical variables.
+
+```{r}  
+# The summary command will show a variety of descriptive statistics for each variable in the data set including the minimum, 1st quartile, median, mean, 3rd quartile, maximum values and if any NAs are present
+
+  summary(train)
+```
+
+# Following are individual descriptive statistics for quantitative variables:
+
+```{r}  
+  mean(train$SalePrice)  # Mean Sale Price
+```
+```{r}  
+  median(train$SalePrice) # Median Sale Price
+```
+```{r}  
+  sd(train$SalePrice) # Standard Deviation of Sale Price
+```
+```{r}  
+  min(train$SalePrice) # Minimum Sale Price
+```
+```{r}  
+  max(train$SalePrice) # Maximum Sale Price
+```
+
+# Following are descriptive statistics for categorical variables:
+```{r}  
+  table(train$Street) # shows the frequency of homes located on gravel streets vs paved streets
+```
+```{r}  
+  table(train$CentralAir) # shows the frequency of homes with and without central air
+```
+```{r}  
+  table(train$CentralAir, train$Electrical) # cross classification of homes with and without central air (Y/N) and the type of electrical for the home (fuse box, electrical)
+```
+
+# To show the percentage of the frequency for each value in a specific categorical variable (such as SaleCondition)
+```{r}
+  table1 <- table(train$SaleCondition)
+  prop.table(table1)
+```  
+
+# 4. Transform at least one variable. It doesn’t matter what the transformation is.
+```{r}
+  train$SalePrice_Transformed <- (train$SalePrice - mean(train$SalePrice))/sd(train$SalePrice)
+  train$SalePrice_Transformed
+  
+```
+
+
+# 5. Plot at least one quantitative variable, and one scatterplot.
+```{r}
+# Show histogram of SalePrice
+  
+  hist(train$SalePrice)
+```
+
+```{r}
+# Show scatterplot of sales price (SalePrice) to total square footage (TotalLivingSF):
+
+  library(ggplot2)
+
+
+plot(train$SalePrice,train$TotalLivingSF,xlab ="SalePrice" , ylab = "TotalLivingSF")
+```  
