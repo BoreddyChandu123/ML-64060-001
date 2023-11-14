@@ -1,0 +1,226 @@
+---
+title: "Assignment_4 "
+author: "chandu"
+date: "2023-11-12" 
+output:
+  pdf_document: default
+  html_document: default
+---
+***Summary***
+
+**For this project, we are using the pharmaceuticals dataset, which comprises a brief profile of 21 pharmaceutical firms as well as data on nine critical performance criteria such as market capitalization and return on equity.***
+
+***We ran a clustering analysis on the nine numerical columns of data for the first question.We're using the K clustering approach.This method pre-processes the data to guarantee that each variable contributes equally before computing the pairwise distances between observations and scaling the data.To determine the optimal number of clusters, the "fviz_nbclust" function was used.The Fviz_nbclust silhouette approach is useful for calculating the appropriate number of clusters. It assists us in determining how many clusters will optimize separation while minimize overlap by calculating silhouette scores for different cluster sizes.As a consequence, we discovered that five clusters are the best number to build.We then conducted a clustering analysis for K = 7. The total of square values within the cluster at K = 7 is 77.5%, while it is 65.4% at K = 5.We discovered that the best number was actually five clusters, because more clearly described clusters are typically indicated by lower WCSS values.below 7. During the clustering phase, the K means technique that we are using considers all variables equally.The kmeans' "centers" represent the means of all the variables inside each cluster. The cluster centroids are determined by combining these methods.***
+
+#Certain patterns connect the non-numerical variables..
+#In the second question, the numerical factors were used to group the clusters. Clusters 1 and 3 appear to be more "moderate" in certain ways, whereas Clusters 4 and 5 appear to be more "extreme". It emerges.
+#Clusters 1 and 3 are "moderate" in the following ways: Their growth rate is slow.
+#Cluster 1 has a high valuation and profitability, but Cluster 3 has a high PE but a lower profit. However, slower expansion).Their recommendations are more in the center of buying and selling than on the road (buy moderately or keep).Their developed market bases include the United States and the United Kingdom, both of which are listed on major exchanges (NYSE)..
+#Clusters 4 and 5 appear to be more "extreme": Cluster 4 is quickly expanding while maintaining a high level of quality
+#risk (low PE, large leverage, and mild sell suggestions).In Cluster 5, distressed stocks have substantial poor growth, excessive beta volatility, and leverage
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+#Load the required libraries
+library(tidyverse)
+library(factoextra)
+library(dplyr)
+set.seed(11)
+```
+
+```{r}
+#Loading the dataset
+pharma_data <- read.csv("Pharmaceuticals (1).csv")
+```
+
+#Question 1- Use only the numerical variables (1 to 9) to cluster the 21 firms. Justify the various choices made in conducting the cluster analysis, such as weights for different variables, the specific clustering algorithm(s) used, the number of clusters formed, and so on.
+
+```{r}
+# Set row names as the company name column, select columns required for clustering (3 through 11) and display summary statistics
+pharma_data<- pharma_data
+row.names(pharma_data) <- pharma_data[,2]
+pharma_data <- pharma_data[,c(3,4,5,6,7,8,9,10,11)]
+row.names(pharma_data)
+summary(pharma_data)
+```
+
+
+
+## Reason for Choosing the 9 variable that is Market_Cap, Beta, PE_Ratio, ROE, ROA, Asset_Turnover, Leverage, Rev_Growth, and Net_Profit_Margin
+
+#The range and importance of each variable can be used to support the variables I chose for my analysis, which was based on the summary with min and max values shown above. Let's examine each variable in turn and talk about why its minimum and maximum values could be used to choose it:
+
+## i) Market_Cap (Market Capitalization): Min Value: 0.41, Max Value: 199.47
+
+#Reasoning: A company's outstanding shares' total market value is represented by its market capitalization. Analyzing this variable might reveal information about the market positioning and scale of the companies, as evidenced by the vast range of values from 0.41 to 199.47, which represents varied company sizes.
+
+
+## ii) Beta: Min Value: 0.18, Max Value: 1.11
+
+#Reasoning: The volatility of a stock is gauged by its beta value in relation to the market. The range of 0.18 to 1.11 indicates that the companies' risk profiles vary from one another. Investors evaluating the risk-return trade-off in their investments need to understand beta.
+
+## iii) PE_Ratio (Price-to-Earnings Ratio): Min Value: 3.60, Max Value: 82.50
+
+#Reasoning: The PE ratio shows how much the market is willing to pay for a company's shares. It is possible to find both overvalued and undervalued stocks by evaluating this variable, since it shows a broad range of valuation values from 3.60 to 82.50.
+
+## iv) ROE (Return on Equity): Min Value: 3.9, Max Value: 62.9
+
+#Reasoning: ROE measures a company's ability to generate profit from shareholders' equity. The range from 3.9 to 62.9 suggests varying levels of profitability and efficiency in utilizing equity, making it an essential metric for assessing financial health.
+
+## v) ROA (Return on Assets): Min Value: 1.40, Max Value: 20.30
+
+ROA assesses how well a business makes money off of its assets. Different levels of asset efficiency are shown by the range from 1.40 to 20.30, which provides information about how successfully businesses turn their assets into profits.
+
+## vi) Asset_Turnover: Min Value: 0.3, Max Value: 1.1
+
+ Asset turnover measures a company's ability to generate sales from its assets. The range from 0.3 to 1.1 indicates varying efficiency in utilizing assets to generate revenue, making it valuable for assessing operational efficiency.
+
+## vii) Leverage: Min Value: 0.0000, Max Value: 3.5100
+
+ The amount of debt a firm utilizes as part of its capital structure is reflected in its leverage. Financial leverage levels vary, as seen by the range from 0.0000 to 3.5100, which provides information on risk and capital structure choices.
+
+## viii) Rev_Growth (Revenue Growth): Min Value: -3.17, Max Value: 34.21
+
+The percentage change in revenue is measured as revenue growth. Diverse degrees of revenue expansion or contraction are indicated by the wide range from -3.17 to 34.21, which sheds light on business dynamics.
+
+## ix) Net_Profit_Margin: Min Value: 2.6, Max Value: 25.5
+
+#The percentage of revenue that is converted into profit is known as the net profit margin. The range of 2.6 to 25.5 represents a range of profitability, which is important to consider when evaluating the financial health of a company.
+
+
+## Now let's Normalize the data
+
+```{r}
+pharma_data <- scale(pharma_data)
+row.names(pharma_data) <- pharma_data[,1]
+dist <- get_dist(pharma_data)
+corr <- cor(pharma_data)
+
+```
+
+## Reason for Normalization:
+
+#To guarantee that each variable contributes proportionately to the clustering process, normalization of the numerical variables is essential. Normalizing these variables helps stop one variable from controlling the clustering based solely on their magnitude because they may have different scales or units. For instance, Beta is a fraction between 0 and 1, whereas Market Cap is in the hundreds.
+
+
+```{r}
+
+fviz_nbclust(pharma_data, kmeans, method = "silhouette")
+
+```
+
+## Explanation  for selecting 5 clusters
+
+The net profit margin is the proportion of revenue that is turned into profit. A range of profitability, which is crucial to take into account when assessing a company's financial health, is between 2.6 and 25.5.
+
+
+```{r}
+# I'm going to create my first k-means clustering algorithm using the Euclidean distance since it is the default method for numerical data. Since the Euclidean distance is sensitive to scale, I need to normalize the data (z-score):
+pharma_data <- scale(pharma_data)
+distance <- get_dist(pharma_data)
+fviz_dist(distance)
+```
+
+
+```{r}
+# Determine the best value for k using an "elbow" chart
+fviz_nbclust(pharma_data, kmeans, method = "wss")
+```
+# The output above displays that around 5 - 6 is the ideal value for k (slope stops being as steep)
+
+
+```{r}
+#Determine the best value for k using the Silhouette Method; compare to "elbow" chart results
+fviz_nbclust(pharma_data, kmeans, method = "silhouette")
+```
+#The silhouette chart displays that 5 is the ideal value for k. I'm selecting k = 5 given both charts show it as an optimal value.
+#Run k-means using k = 5, number of restarts = 25
+
+```{r}
+k5 <- kmeans(pharma_data, centers = 5, nstart = 25)
+fviz_cluster(k5, data = pharma_data)
+k5$cluster
+```
+
+```{r}
+# Display the centroids
+k5$centers
+```
+
+```{r}
+# Display the size of each clusters
+k5$size
+```
+
+##  In financial analysis, particularly when evaluating a firm, these variables are often categorized into groups of financial ratios. For instance, ratios such as Return on Assets (ROA) and Net Profit Margin fall under the classification of profitability ratios since they derive from analogous figures extracted from a balance sheet or income statement, potentially leading to correlations between them.
+
+## summary statistics reveals there may be outliers in the dataset. Given the Euclidean distance is sensitive to outliers and ignores correlation, I'm going to cluster the data again using another distance to see the output. I've chosen the Manhattan Distance for this exercise.
+
+## Run k-means again using k = 5 (based on previous "elbow" and silhouette methods) using the Manhattan Distance.
+
+```{r}
+library(flexclust)
+set.seed(101)
+km5 = kcca(pharma_data, k=5, kccaFamily("kmedians"))
+km5
+```
+
+
+```{r}
+# Apply predict function
+clusters_index <- predict(km5)
+dist(km5@centers)
+image(km5)
+points(pharma_data, col= clusters_index, pch= 19, cex=0.3)
+```
+
+##The utilization of the k-means algorithm with the Manhattan distance distinctly yields a divergent clustering outcome, with the majority of the dataset now grouped into two clusters, in contrast to a singular cluster when utilizing the Euclidean distance. Furthermore, noteworthy is the observation that one of the clusters in this result encompasses only a single data point.
+
+##Upon inspecting the clustering diagram above, it is evident that the data points exhibit less tight cohesion within the clusters compared to when the Euclidean distance was employed. Moreover, the identification of one cluster containing only a single data point raises questions about the suitability of the chosen number of clusters when utilizing the Manhattan distance. However, for the purposes of this analysis, I will proceed with k = 5, as determined to be optimal through the elbow and Silhouette methods. Despite both Euclidean and Manhattan distance methods being considered, I lean towards the Euclidean distance approach as the clusters appear more compact when utilizing the "optimal" value of k = 5.
+
+## Display k-means algorithm using k = 5 and Euclidean distance again.
+
+```{r}
+k5 <- kmeans(pharma_data, centers = 5, nstart = 25)
+fviz_cluster(k5, data = pharma_data)
+k5$cluster
+```
+
+```{r}
+clusterindex = predict(km5)
+
+dist(km5@centers)
+
+```
+
+##Question 2- Interpret the clusters with respect to the numerical variables used in forming the clusters.
+
+***ANS/:Cluster 1 is characterized by high market capital, high ROE, high ROA, and high asset turnover.***
+
+***Cluster 2 is the largest cluster and is characterized by average market capital, beta, price/earnings ratio, average to above-average ROA, and above average net profit margin. It also represents a relatively wide range of ROE, leverage, and estimated revenue growth values.***
+
+***Cluster 3 is characterized by similar beta values, high price/earnings ratio, and low ROE ROA, net profit margin.***
+
+***Cluster 4 is characterized by below average ROE, ROA, and asset turnover with high estimated revenue growth.***
+
+***Cluster 5 is characterized by low market capital, ROA, asset turnover, estimated revenue growth, net profit margin. It also represents high beta and extreme leverage (high or low).***
+
+---
+
+
+##Question-3 Provide an appropriate name for each cluster using any or all of the variables in the dataset.
+
+***ANS/:Cluster 1 : Hold/Buy these prominent companies (high ROE & ROA)***
+
+***Cluster: The average mix with high net profit margin***
+
+***Cluster: High price/earnings; low ROE, ROA, & net profit margin***
+
+***Cluster 4: Global mix with low ROE, ROA, & asset turnover but high estimated revenue growth.***
+
+***Cluster 5 : Unique stock exchange mix with mostly low variables; extreme beta & leverage.***
+
+
